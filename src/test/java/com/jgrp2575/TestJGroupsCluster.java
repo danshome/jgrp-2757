@@ -12,15 +12,19 @@ import org.jgroups.View;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ManualTestJGroupsCluster {
+public class TestJGroupsCluster {
+
+  private static final Logger logger = LoggerFactory.getLogger(TestJGroupsCluster.class);
 
   private final ConcurrentHashMap<String, JChannel> channels = new ConcurrentHashMap<>();
   private final List<ApplicationThread> applicationThreads = new ArrayList<>();
   int numberOfApplications = 42;
 
   @BeforeEach
-  public void setUp() throws Exception {
+  public void setUp() {
     System.setProperty("jgroups.bind_addr", "localhost");
     for (int applicationId = 1; applicationId <= numberOfApplications; applicationId++) {
       ApplicationThread applicationThread = new ApplicationThread(applicationId);
@@ -34,7 +38,7 @@ public class ManualTestJGroupsCluster {
   public void tearDown() {
     System.clearProperty("jgroups.bind_addr");
     // Close the channel when done
-    System.out.println("Shutting down");
+    logger.info("Shutting down");
     channels.values().parallelStream().forEach(JChannel::close);
     applicationThreads.forEach(
         ApplicationThread::setShutdown);
@@ -68,13 +72,13 @@ public class ManualTestJGroupsCluster {
     @Override
     public void receive(Message msg) {
       // Handle incoming messages
-      System.out.println(name + " Received message: " + (String) msg.getObject());
+      logger.info(name + " Received message: " + msg.getObject());
     }
 
     @Override
     public void viewAccepted(View view) {
       // Handle view changes (membership changes)
-      System.out.println(
+      logger.info(
           name
               + ": "
               + new Date()
@@ -84,7 +88,7 @@ public class ManualTestJGroupsCluster {
   }
 
   public class ApplicationThread implements Runnable {
-    private int applicationId;
+    private final int applicationId;
     private boolean shutdown = false;
     public ApplicationThread(int applicationId) {
       this.applicationId = applicationId;
@@ -100,8 +104,7 @@ public class ManualTestJGroupsCluster {
       try {
         randomSleep(1000, 60000);
         JChannel channel =
-            new JChannel(
-                "/Users/dmclau/workspace/cris/trunk/cris-common-event/src/main/resources/profiles/local/jgroups_config.xml");
+            new JChannel(getClass().getResourceAsStream("/profiles/local/jgroups_config.xml"));
 
         // Set a receiver to handle incoming messages and view changes
         channel.setName("CLUSTER_NODE_" + applicationId);
@@ -113,7 +116,7 @@ public class ManualTestJGroupsCluster {
           Thread.sleep(1000);
         }
       } catch (Throwable t) {
-        t.printStackTrace();
+        logger.info("An error occurred", t);
       }
     }
   }
