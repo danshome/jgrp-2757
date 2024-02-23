@@ -18,7 +18,7 @@
     <jgroups.version>5.3.3.Final</jgroups.version>
     <junit.version>5.10.2</junit.version>
     <hsqldb.version>2.7.2</hsqldb.version>
-
+    <db2.version>11.5.9.0</db2.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -55,6 +55,12 @@
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
       <version>${hsqldb.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.db2</groupId>
+      <artifactId>jcc</artifactId>
+      <version>${db2.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
