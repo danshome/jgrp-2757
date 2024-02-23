@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
@@ -18,8 +17,6 @@ import org.slf4j.LoggerFactory;
 public class TestJGroupsCluster {
 
   private static final Logger logger = LoggerFactory.getLogger(TestJGroupsCluster.class);
-
-  private final ConcurrentHashMap<String, JChannel> channels = new ConcurrentHashMap<>();
   private final List<ApplicationThread> applicationThreads = new ArrayList<>();
   int numberOfApplications = 42;
 
@@ -38,11 +35,10 @@ public class TestJGroupsCluster {
   public void tearDown() {
     System.clearProperty("jgroups.bind_addr");
     // Close the channel when done
-    logger.info("Shutting down");
-    channels.values().parallelStream().forEach(JChannel::close);
+    logger.info("SHUTTING DOWN....");
     applicationThreads.forEach(ApplicationThread::setShutdown);
     try {
-      Thread.sleep(60000);
+      Thread.sleep(10000);
     } catch (InterruptedException ignored) {
     }
   }
@@ -50,7 +46,7 @@ public class TestJGroupsCluster {
   @Test
   public void testClusterFormation() throws Exception {
     // Wait for 30 minutes for cluster to form
-    Thread.sleep(1000 * 60 * 30);
+    Thread.sleep(1000 * 60 * 5);
   }
 
   private static void randomSleep(int minMillis, int maxMillis) {
@@ -59,7 +55,6 @@ public class TestJGroupsCluster {
       int randomMillis = random.nextInt(maxMillis - minMillis + 1) + minMillis;
       Thread.sleep(randomMillis);
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
     }
   }
 
@@ -104,7 +99,7 @@ public class TestJGroupsCluster {
     public void run() {
 
       try {
-        randomSleep(1000, 60000);
+        randomSleep(1000, 30000);
         JChannel channel =
             new JChannel(getClass().getResourceAsStream("/profiles/local/jgroups_config.xml"));
 
@@ -113,10 +108,15 @@ public class TestJGroupsCluster {
         channel.setReceiver(new ChannelReceiver(channel.getName()));
         // Connect to the cluster
         channel.connect("TestCluster"); // "TestCluster" is the name of the test cluster
-        channels.put(channel.getName(), channel);
         while (!shutdown) {
-          Thread.sleep(1000);
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            break;
+          }
         }
+        channel.close();
+        logger.info("{} Shutdown", channel.getName());
       } catch (Throwable t) {
         logger.error("An error occurred", t);
       }
