@@ -112,6 +112,7 @@ public class TestJGroupsCluster {
           try {
             Thread.sleep(1000);
           } catch (InterruptedException e) {
+            shutdown = true;
             break;
           }
         }
