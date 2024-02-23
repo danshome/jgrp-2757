@@ -116,7 +116,7 @@ public class TestJGroupsCluster {
           Thread.sleep(1000);
         }
       } catch (Throwable t) {
-        logger.info("An error occurred", t);
+        logger.error("An error occurred", t);
       }
     }
   }
