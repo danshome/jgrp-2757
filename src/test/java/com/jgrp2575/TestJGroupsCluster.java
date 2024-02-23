@@ -40,8 +40,7 @@ public class TestJGroupsCluster {
     // Close the channel when done
     logger.info("Shutting down");
     channels.values().parallelStream().forEach(JChannel::close);
-    applicationThreads.forEach(
-        ApplicationThread::setShutdown);
+    applicationThreads.forEach(ApplicationThread::setShutdown);
     try {
       Thread.sleep(60000);
     } catch (InterruptedException ignored) {
@@ -50,7 +49,7 @@ public class TestJGroupsCluster {
 
   @Test
   public void testClusterFormation() throws Exception {
-    //Wait for 30 minutes for cluster to form
+    // Wait for 30 minutes for cluster to form
     Thread.sleep(1000 * 60 * 30);
   }
 
@@ -66,9 +65,11 @@ public class TestJGroupsCluster {
 
   public static class ChannelReceiver implements Receiver {
     String name;
+
     ChannelReceiver(String name) {
       this.name = name;
     }
+
     @Override
     public void receive(Message msg) {
       // Handle incoming messages
@@ -87,9 +88,10 @@ public class TestJGroupsCluster {
     }
   }
 
-  public class ApplicationThread implements Runnable {
+  private class ApplicationThread implements Runnable {
     private final int applicationId;
     private boolean shutdown = false;
+
     public ApplicationThread(int applicationId) {
       this.applicationId = applicationId;
     }
