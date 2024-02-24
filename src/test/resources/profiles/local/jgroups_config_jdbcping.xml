@@ -2,7 +2,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
   <TCP
-    bind_addr="${jgroups.bind_addr:GLOBAL}"
+    bind_addr="${jgroups.bind_addr:match-address:204.67.\*}"
     bind_port="${jgroups.bind_port:7800}"
     port_range="45"
     external_addr="${jgroups.external_addr}"
@@ -20,15 +20,6 @@
     remove_all_data_on_view_change="true"
     register_shutdown_hook="false"
   />
-<!--  <JDBC_PING-->
-<!--    connection_driver="com.ibm.db2.jcc.DB2Driver"-->
-<!--    connection_url="jdbc:db2://dbhost:51000/MYDB:clientProgramName=JGroups;currentSchema=MYSCHEMA;"-->
-<!--    connection_username="user"-->
-<!--    connection_password=""-->
-<!--    initialize_sql=""-->
-<!--    remove_all_data_on_view_change="true"-->
-<!--    register_shutdown_hook="false"-->
-<!--  />-->
   <MERGE3 min_interval="10000"
     max_interval="30000"/>
   <FD_SOCK2/>

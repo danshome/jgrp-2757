@@ -1,0 +1,69 @@
+<!--
+The following JGroups stack configuration is modeled after the tcp-low-latency.xml in the 5.3.2 tag.
+https://github.com/belaban/JGroups/releases/tag/jgroups-5.3.2.Final
+We send very small messages to tell applications that configuration changes are made and all the
+applications need to repopulate caches, so low latency is more important than high throughput.
+Seems like https://issues.redhat.com/browse/JGRP-2601 could cause us issues.
+-->
+<config xmlns="urn:org:jgroups"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
+
+  <TCP_NIO2
+    bind_addr="${jgroups.bind_addr:GLOBAL}"
+    bind_port="${jgroups.bind_port:7800}"
+    port_range="45"
+    thread_pool.min_threads="0"
+    thread_pool.max_threads="200"
+    thread_pool.keep_alive_time="30000"
+    diag.enable_tcp="true"
+    diag.enable_udp="false"
+    tcp_nodelay="true"
+    diag.port="7500"
+    diag.port_range="45"
+    diag.bind_addr="${jgroups.bind_addr:GLOBAL}"
+    use_acks="true"
+    bundler_type="no-bundler"
+  />
+  <!--  <RED/>-->
+  <!--  <PDC cache_dir="${java.io.tmpdir}/jgroups" />-->
+  <MPING mcast_addr="239.1.30.100"
+    return_entire_cache="${jgroups.mping.return_entire_cache:false}"
+    use_disk_cache="false"
+    send_cache_on_join="true"
+    stagger_timeout="1000"
+    num_discovery_runs="25"
+    break_on_coord_rsp="false"
+  />
+  <TCPPING async_discovery="true"
+    initial_hosts="tomcat-backend[7800],crisappslb[7800],localhost[7800]"
+    return_entire_cache="${jgroups.tcpping.return_entire_cache:false}"
+    port_range="${jgroups.tcp.port_range:15}"
+    use_disk_cache="false"
+    send_cache_on_join="true"
+    stagger_timeout="1000"
+    num_discovery_runs="10"
+    break_on_coord_rsp="false"
+  />
+  <PING/>
+  <MERGE3  min_interval="1000" max_interval="10000" check_interval="15000"/>
+  <FD_SOCK2/>
+  <FD_ALL3 timeout="8000" interval="3000" />
+  <VERIFY_SUSPECT2 timeout="1500"  />
+  <!--<BARRIER />-->
+  <pbcast.NAKACK2 use_mcast_xmit="false" />
+  <UNICAST3 />
+  <pbcast.STABLE desired_avg_gossip="50000" max_bytes="4M"/>
+  <pbcast.GMS print_local_addr="true"
+    join_timeout="2000"
+    max_join_attempts="0"
+    print_view_details="true"
+    print_physical_addrs="true"
+  />
+  <UFC max_credits="2M"
+    min_threshold="0.4"/>
+  <MFC max_credits="2M"
+    min_threshold="0.4"/>
+  <FRAG4 frag_size="60K"  />
+  <pbcast.STATE_TRANSFER/>
+</config>

@@ -3,6 +3,7 @@ package com.jgrp2575;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -17,8 +18,11 @@ import org.slf4j.LoggerFactory;
 public class TestJGroupsCluster {
 
   private static final Logger logger = LoggerFactory.getLogger(TestJGroupsCluster.class);
+
+  private static final Object lock = new Object();
+
   private final List<ApplicationThread> applicationThreads = new ArrayList<>();
-  int numberOfApplications = 42;
+  static int numberOfApplications = 42;
 
   @BeforeEach
   public void setUp() {
@@ -45,8 +49,9 @@ public class TestJGroupsCluster {
 
   @Test
   public void testClusterFormation() throws Exception {
-    // Wait for 30 minutes for cluster to form
-    Thread.sleep(1000 * 60 * 5);
+    synchronized (lock) {
+      lock.wait(1000 * 60 * 5); // Wait up to 5 minutes for cluster formation
+    }
   }
 
   private static void randomSleep(int minMillis, int maxMillis) {
@@ -55,6 +60,7 @@ public class TestJGroupsCluster {
       int randomMillis = random.nextInt(maxMillis - minMillis + 1) + minMillis;
       Thread.sleep(randomMillis);
     } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -73,17 +79,17 @@ public class TestJGroupsCluster {
 
     @Override
     public void viewAccepted(View view) {
-      // Handle view changes (membership changes)
-      logger.info(
-          name
-              + ": "
-              + new Date()
-              + " : View Member Count: "
-              + (view.getMembers().isEmpty() ? "no members" : view.getMembers().size()));
+      int currentSize = view.getMembers().size();
+      logger.info(name + ": " + new Date() + " : View Member Count: " + (currentSize == 0 ? "no members" : currentSize));
+      if (currentSize == numberOfApplications) {
+        synchronized (lock) {
+          lock.notifyAll(); // Notify the waiting test thread
+        }
+      }
     }
   }
 
-  private class ApplicationThread implements Runnable {
+  private static class ApplicationThread implements Runnable {
     private final int applicationId;
     private boolean shutdown = false;
 
@@ -101,7 +107,8 @@ public class TestJGroupsCluster {
       try {
         randomSleep(1000, 30000);
         JChannel channel =
-            new JChannel(getClass().getResourceAsStream("/profiles/local/jgroups_config.xml"));
+            new JChannel(Objects.requireNonNull(
+                getClass().getResourceAsStream("/profiles/local/jgroups_config.xml")));
 
         // Set a receiver to handle incoming messages and view changes
         channel.setName("CLUSTER_NODE_" + applicationId);
